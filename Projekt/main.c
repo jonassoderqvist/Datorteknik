@@ -2,7 +2,7 @@
 
 int pulse = 0xFF;
 static const off = 0xff;
-
+/*Does it work?*/
 /* Defines pulse-widths for two octaves for a set of tones */
 static const E6 = 3800;
 static const D6 = 4250;
