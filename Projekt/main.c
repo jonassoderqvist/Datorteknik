@@ -11,6 +11,9 @@ static const E5 = 7584;
 static const D5 = 8513;
 static const C5 = 9555;
 
+int combineNotes(int posA, int posB, int posC, int posD){
+ return (posA+posB+posC+posD);
+}
 
 void initSynth() {
 	for(;;) {
@@ -98,7 +101,7 @@ int main(void) {
 
 // Vad mer göra?
 // Använda oss av timers, inbyggd pwm-funktion och volym.
-// Kunna spela två toner
+// Kunna spela fyra toner
 
 
 
