@@ -12,8 +12,22 @@ static const D5 = 8513;
 static const C5 = 9555;
 
 int combineNotes(int posA, int posB, int posC, int posD){
- return (posA+posB+posC+posD);
+int notes = 0;
+if (posA != NULL){
+    notes++;
 }
+if (posB != NULL){
+    notes++;
+}
+if (posC != NULL){
+    notes++;
+}
+if (posD != NULL){
+    notes++;
+}
+    return ((posA+posB+posC+posD)/notes);
+}
+
 
 void initSynth() {
 	for(;;) {
@@ -87,7 +101,7 @@ int playTone(pulseWidth) {
 			PORTE = pulse;
 			delay(pulseWidth);
 			PORTECLR = off;
-			delay(pulseWidth);
+			delay(100-pulseWidth);
 			// PWM HERE
 			// OC1 !		
 }
