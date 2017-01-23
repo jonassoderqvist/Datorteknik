@@ -13,18 +13,18 @@ static const C5 = 9555;
 
 int combineNotes(int posA, int posB, int posC, int posD){
 int notes = 0;
-if (posA != NULL){
-    return posA;
-}
-if (posB != NULL){
-    return ((posA+posB)/2);
-}
-if (posC != NULL){
-    return ((posA+posB+posC)/3);
-}
-if (posD != NULL){
+    if (posA != NULL){
+        return posA;
+    }
+    if (posB != NULL){
+        return ((posA+posB)/2);
+    }
+    if (posC != NULL){
+        return ((posA+posB+posC)/3);
+    }
+    if (posD != NULL){
         return ((posA+posB+posC+posD)/4);
-}
+    }
 }
 
 
