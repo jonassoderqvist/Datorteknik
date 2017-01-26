@@ -28,7 +28,21 @@ static const D5 = 8513;
 static const C5 = 9555;
 
 int combineNotes(int posA, int posB, int posC, int posD){
- return (posA+posB+posC+posD);
+int notes = 0;
+    if (posD != NULL){
+        return ((posA+posB+posC+posD)/4);
+    }
+    if (posC != NULL){
+        return ((posA+posB+posC)/3);
+    }
+
+    if (posB != NULL){
+        return ((posA+posB)/2);
+    }
+    if (posA != NULL){
+        return posA;
+    }
+    return NULL;
 }
 
 void initSynth() {
