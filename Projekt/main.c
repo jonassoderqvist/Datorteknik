@@ -1,4 +1,9 @@
 #include <pic32mx.h>
+#include <stdint.h>
+
+extern void _enable_interrupt();
+int flags = 0;
+int hex_num[20];
 
 // variables for the wave-generation
 volatile double  waveValueA = 0;
@@ -18,7 +23,7 @@ volatile int wavelengthCounterD = 0;
 
 int pulse = 0xFF;
 static const off = 0xff;
-/*Does it work? */
+/* Does it work? */
 /* Defines pulse-widths for two octaves for a set of tones */
 static const E6 = 3800;
 static const D6 = 4250;
@@ -27,38 +32,28 @@ static const E5 = 7584;
 static const D5 = 8513;
 static const C5 = 9555;
 
-int combineNotes(int posA, int posB, int posC, int posD){
-int notes = 0;
-    if (posD != NULL){
-        return ((posA+posB+posC+posD)/4);
-    }
-    if (posC != NULL){
-        return ((posA+posB+posC)/3);
-    }
-
-    if (posB != NULL){
-        return ((posA+posB)/2);
-    }
-    if (posA != NULL){
-        return posA;
-    }
-    return NULL;
-}
+extern void _enable_interrupt();
+int flags = 0;
+int hex_num[20];
 
 void initSynth() {
 	for(;;) {
+	    int[4] notes;
 		int btns = getBtns();
 		int switches = getSwitches();
 		
 		if((switches & 0b001) == 0b001) {
 			if((btns & 0b001) == 0b001) {
-				playTone(E5);   // E
+			int n = sizeof(notes) / sizeof(int);
+				notes[n+1]=E5;   // E
 			}
 			if((btns & 0b010) == 0b010) {
-				playTone(D5);    //D
+				int n = sizeof(notes) / sizeof(int);
+                				notes[n+1]=D5;    //D
 			}
 			if((btns & 0b100) == 0b100) {
-				playTone(C5);           // C
+				int n = sizeof(notes) / sizeof(int);
+                				notes[n+1]=C5;           // C
 			}
 		}		
 		
@@ -67,12 +62,14 @@ void initSynth() {
 			
 		}
 		if((btns & 0b010) == 0b010) {
-			playTone(D6);    //D
+			int n = sizeof(notes) / sizeof(int);
+            				notes[n+1]=D6;    //D
 		}
 		if((btns & 0b100) == 0b100) {
-			playTone(C6);           // C
+			int n = sizeof(notes) / sizeof(int);
+            				notes[n+1]=C6;           // C
 		}
-		
+		playTone(notes);
 		//klocka 3,B
 		if((IFS(0)&0x00001000)==0x00001000){
 			wavelengthCounterB++;
@@ -278,26 +275,51 @@ int playToneRev(pulseWidth, x) {
 			// OC1 !		
 }
 
-int playTone(pulseWidth) {
-			PORTE = pulse;
-			delay(pulseWidth);
-			PORTECLR = off;
-			delay(pulseWidth);
-			// PWM HERE
-			// OC1 !		
+void playTone(int[] pulseWidth) {
+    if (pulseWidth[3] != 0){
+        return pwm(((pulseWidth[0]+pulseWidth[1]+pulseWidth[2]+pulseWidth[3])/4), 50);
+    }
+    if (pulseWidth[2] != 0){
+        return pwm(((pulseWidth[0]+pulseWidth[1]+pulseWidth[2])/3), 50);
+    }
+    if (pulseWidth[1] != 0){
+        return pwm(((pulseWidth[0]+pulseWidth[1])/2), 50);
+    }
+    if (pulseWidth[0] != 0){
+        return pwm(pulseWidth[0], 50);
+    }
+    return 0;
+}
+
+void user_isr( void ) {
+	IFSCLR(0) = 0x0100;
+}
+void pwm(int pwm, int dutycycle){
+	T2CON = 0x070; // Clear timer2, prescale at 1:1
+	TMR2 = 0x0; // Timer2 value starts at 0
+	OC1CON = 0x0000; // Turn off and clear pwm
+	OC1R = 0x0064;
+	OC1RS = dutycycle; // Dutycycle
+	OC1CON = 0x0006; // Configure for PWM mode without Fault pin
+
+
+	PR2 = pwm; // Set dutycycle, HÄR ÄNDRAR MAN TONER!
+	IECSET(0) = 0x0100; // Enable T2 interrupt
+	IPCSET(2) = 0x01C; // Set T2 interrupt priority to 7
+
+	enable_interrupt();
+
+	OC1CONSET = 0x08000; // Enable OC1
+	T2CONSET |= 0x08000; // Enable Timer2
+	return 0;
 }
 
 int main(void) {
 	TRISE &= ~0xff; 	/* Port E bits 0 through 7 is used for the LED and is set to 0 (output) */
-	
 	initTimers();
-	initSynth();	
+	initSynth();
 	return 0;
 }
-
-
-
-
 
 // Vad mer göra?
 // Använda oss av timers, inbyggd pwm-funktion och volym.
