@@ -214,7 +214,8 @@ void initPwm(){
 }
 
 void setPwm(int pwm, int duty){
-	OC1RS = duty;
+    int dutycycle = (0xFFFFFFFF * duty) / 100;
+	OC1RS = dutycycle;
 	PR2 = pwm;
 }
 
