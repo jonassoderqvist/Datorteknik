@@ -1,14 +1,10 @@
 #include <pic32mx.h>
 #include <stdint.h>
 
-extern void _enable_interrupt();
-int flags = 0;
-int hex_num[20];
-
 // variables for the wave-generation
 volatile double  waveValueA = 0;
 volatile double  waveValueB = 0;
-volatile double  waveValueC = 0;
+volatile double  waveValueC = 255;
 volatile double  waveValueD = 0;
 
 char operandA = 'A';
@@ -37,151 +33,52 @@ int flags = 0;
 int hex_num[20];
 
 void initSynth() {
+	int notes = 0;
 	for(;;) {
-	    int[4] notes;
 		int btns = getBtns();
 		int switches = getSwitches();
 		
-		if((switches & 0b001) == 0b001) {
+		/* if((switches & 0b001) == 0b001) {
 			if((btns & 0b001) == 0b001) {
 			int n = sizeof(notes) / sizeof(int);
-				notes[n+1]=E5;   // E
+				notes[n-1]=E5;   // E
 			}
 			if((btns & 0b010) == 0b010) {
 				int n = sizeof(notes) / sizeof(int);
-                				notes[n+1]=D5;    //D
+           		notes[n-1]=D5;    //D
 			}
 			if((btns & 0b100) == 0b100) {
 				int n = sizeof(notes) / sizeof(int);
-                				notes[n+1]=C5;           // C
+                notes[n-1]=C5;           // C
 			}
-		}		
+		}	 */	
+		
+		int numNotes = 0;
 		
 		if((btns & 0b0001) == 0b0001) {
-			playToneRev(E6, 2);   // E
+			//playToneRev(E6, 2);   // E
+			notes = notes + 255;
+			numNotes++;
 			
 		}
-		if((btns & 0b010) == 0b010) {
-			int n = sizeof(notes) / sizeof(int);
-            				notes[n+1]=D6;    //D
-		}
-		if((btns & 0b100) == 0b100) {
-			int n = sizeof(notes) / sizeof(int);
-            				notes[n+1]=C6;           // C
-		}
-		playTone(notes);
-		//klocka 3,B
-		if((IFS(0)&0x00001000)==0x00001000){
-			wavelengthCounterB++;
-			switch(operandB){
-				case 'A' :
-					waveValueB += 0.001;
-					break;
-				case 'S':
-					waveValueB -= 0.001;
-					break;
-			}
-			if(wavelengthCounterB > 400000){
-				switch(operandB){
-					case 'A' : 
-					operand = 'S';
-					break;
-					case 'S' : 
-					operand = 'A';
-					break;
-				}
-				wavelengthCounterB = 0;
-			}			
-			IFSCLR(0) = 0x00001000;// Clear the timer interrupt status flag
-		}
-		
-		//klocka 4,C
-		if((IFS(0)&0x00010000)==0x00010000){
-			switch(operandC){
-				case 'A' :
-					waveValueC += 0.001;
-					break;
-				case 'S':
-					waveValueC -= 0.001;
-					break;
-			}
-			if(wavelengthCounterC > 400000){
-				switch(operandC){
-					case 'A' : 
-					operand = 'S';
-					break;
-					case 'S' : 
-					operand = 'A';
-					break;
-				}		
-				wavelengthCounterC = 0;
-			}			
-			IFSCLR(0) = 0x00010000;// Clear the timer interrupt status flag
-		}
-		
-		//klocka 5,D
-		if((IFS(0)&0x00100000)==0x00100000){
-			switch(operandD){
-				case 'A' :
-					waveValueD += 0.001;
-					break;
-				case 'S':
-					waveValueD -= 0.001;
-					break;
-			}			
-			if(wavelengthCounterD > 500000){
-				switch(operandD){
-					case 'A' : 
-					operand = 'S';
-					break;
-					case 'S' : 
-					operand = 'A';
-					break;
-				}
-				wavelengthCounter = 0;
-			}	
-			IFSCLR(0) = 0x00100000;// Clear the timer interrupt status flag		
-		}
-		
-		
-		//klocka 2, A
-		if((IFS(0)&0x00000100)==0x00000100){
-			wavelengthCounterA++;
-			wavelengthCounterC++;
-			wavelengthCounterD++;
-				
-			switch(operandA){
-				case 'A' :
-					waveValueA += 0.001;
-					break;
-				case 'S':
-					waveValueA -= 0.001;
-					break;
-			}
+		else if((btns & 0b010) == 0b010) {
+			notes =  notes +300;
+			numNotes++;
 			
-			if(wavelengthCounterA > 300000){
-			switch(operandA){
-				case 'A' : 
-				operand = 'S';
-				break;
-				case 'S' : 
-				operand = 'A';
-				break;
-			}		
-			wavelengthCounter = 0;
 		}
-			PORTE = 0x0f;
-			IFSCLR(0) = 0x00000100;// Clear the timer interrupt status flag
-			PORTE = 0x00;
-		}	
+		else if((btns & 0b100) == 0b100) {
+			notes = notes + 355;
+			numNotes++;        // C
+		}
+		
+		int noteToPlay = notes/numNotes;
+		playTone(noteToPlay);
+	
 	}
 }
 
 int startTimer(int timerNum){
 	switch(timerNum){
-		case 2:
-			T2CONSET = 0x8000; // Start the timer2
-			break;
 		case 3:
 			T3CONSET = 0x8000; // Start the timer2
 			break;
@@ -216,28 +113,34 @@ int stopTimer(int timerNum){
 int initTimers(){
 	// Initiates the timers that ultimately will generate a oscilating sawtooth-wave/sound-wave/sinus-wave
 	
-	T2CON = 0x0; // Stop the timer and clear the control register, prescaler at 1:1,internal clock source
+	//T2CON = 0x0; // Stop the timer and clear the control register, prescaler at 1:1,internal clock source
 	T3CON = 0x0;
 	T4CON = 0x0;
 	T5CON = 0x0;
 	
-	TMR2 = 0x0; // Clear the timer register
+	//TMR2 = 0x0; // Clear the timer register
 	TMR3 = 0x0;
 	TMR4 = 0x0;
 	TMR5 = 0x0;
 	
-	PR2 = 0xff; // Load the period register
+	//PR2 = 0xff; // Load the period register
 	PR3 = 0xff;
 	PR4 = 0xff;
 	PR5 = 0xff;
 
-	IPCSET(2) = 0x0000000D; // Set priority level = 3,Set subpriority level = 1
+	//IPCSET(2) = 0x0000000D; // Set priority level = 3,Set subpriority level = 1
 	IPCSET(3) = 0x0000000D;
 	IPCSET(4) = 0x0000000D;
 	IPCSET(5) = 0x0000000D;
+	
+	enable_interrupt();
 
-	IFSCLR(0) = 0x00111100; // Clear the timer interrupt status flags
-	IECSET(0) = 0x00111100; // Enable timer interrupts
+	IFSCLR(0) = 0x00111000; // Clear the timer interrupt status flags
+	IECSET(0) = 0x00111000; // Enable timer interrupts
+	
+	T3CONSET = 0x8000; // Start the timer2
+	T4CONSET = 0x8000; // Start the timer2
+	T5CONSET = 0x8000; // Start the timer2
 	
 	return 0;
 }
@@ -251,7 +154,7 @@ int getSwitches(void) {
 }
 
 int getbtn(void) {
-	return(PORTF &0x1);
+	return(PORTD &0x1);
 }
 
 /*  Pulsewidth to Frequency:
@@ -262,7 +165,7 @@ int getbtn(void) {
 	(1 / Frequency) = periodTime
 	( PeriodTime / 2 ) / 0.0000001 = pulseWidth */
 
-int playToneRev(pulseWidth, x) {
+/* int playToneRev(pulseWidth, x) {
 			PORTE = pulse;
 			delay(pulseWidth);
 			PORTECLR = off;
@@ -273,53 +176,141 @@ int playToneRev(pulseWidth, x) {
 			}
 			// PWM HERE
 			// OC1 !		
-}
+} */
 
-void playTone(int[] pulseWidth) {
-    if (pulseWidth[3] != 0){
-        return pwm(((pulseWidth[0]+pulseWidth[1]+pulseWidth[2]+pulseWidth[3])/4), 50);
+void playTone(int pulseWidth) {
+	setPwm(pulseWidth, 50);
+	
+    /* if (pulseWidth[3] != 0){
+        pwm(((pulseWidth[0]+pulseWidth[1]+pulseWidth[2]+pulseWidth[3])/4), 50);
     }
     if (pulseWidth[2] != 0){
-        return pwm(((pulseWidth[0]+pulseWidth[1]+pulseWidth[2])/3), 50);
+        pwm(((pulseWidth[0]+pulseWidth[1]+pulseWidth[2])/3), 50);
     }
     if (pulseWidth[1] != 0){
-        return pwm(((pulseWidth[0]+pulseWidth[1])/2), 50);
+        pwm(((pulseWidth[0]+pulseWidth[1])/2), 50);
     }
     if (pulseWidth[0] != 0){
-        return pwm(pulseWidth[0], 50);
-    }
-    return 0;
+        pwm(pulseWidth[0], 50);
+    } */
 }
 
-void user_isr( void ) {
-	IFSCLR(0) = 0x0100;
-}
-void pwm(int pwm, int dutycycle){
+void initPwm(){
 	T2CON = 0x070; // Clear timer2, prescale at 1:1
 	TMR2 = 0x0; // Timer2 value starts at 0
 	OC1CON = 0x0000; // Turn off and clear pwm
 	OC1R = 0x0064;
-	OC1RS = dutycycle; // Dutycycle
+	OC1RS = 0; // Dutycycle
 	OC1CON = 0x0006; // Configure for PWM mode without Fault pin
-
-
-	PR2 = pwm; // Set dutycycle, HÄR ÄNDRAR MAN TONER!
+	PR2 = 0; // Set dutycycle, HÄR ÄNDRAR MAN TONER!
 	IECSET(0) = 0x0100; // Enable T2 interrupt
 	IPCSET(2) = 0x01C; // Set T2 interrupt priority to 7
-
 	enable_interrupt();
-
 	OC1CONSET = 0x08000; // Enable OC1
 	T2CONSET |= 0x08000; // Enable Timer2
-	return 0;
+}
+
+void setPwm(int pwm, int duty){
+	OC1RS = duty;
+	PR2 = pwm;
+}
+
+void pwm(int pwm, int dutycycle){
+
 }
 
 int main(void) {
-	TRISE &= ~0xff; 	/* Port E bits 0 through 7 is used for the LED and is set to 0 (output) */
+	TRISE = 0x00; 	/* Port E bits 0 through 7 is used for the LED and is set to 0 (output) */
+	PORTE = 0x00;
 	initTimers();
+	initPwm();
+	//setPwm(255, 50);
 	initSynth();
 	return 0;
 }
+
+void user_isr( void ) {
+	if((IFS(0)&0x0100)==0x0100){
+		IFSCLR(0) = 0x0100;
+	}
+	
+	// Värde A
+	else if((IFS(0)&0x01000)==0x01000){
+			wavelengthCounterA++;
+			switch(operandA){
+				case 'A' :
+					waveValueA += 0.001;
+					break;
+				case 'S':
+					waveValueA -= 0.001;
+					break;
+			}
+			if(wavelengthCounterA > 300000){
+				switch(operandA){
+					case 'A' : 
+					operandA = 'S';
+					break;
+					case 'S' : 
+					operandA = 'A';
+					break;
+				}
+				wavelengthCounterA = 0;
+			}			
+			IFSCLR(0) = 0x01000;// Clear the timer interrupt status flag
+		}
+		
+		//klocka 4,C
+		else if((IFS(0)&0x010000)==0x010000){
+			wavelengthCounterB++;
+			switch(operandB){
+				case 'A' :
+					waveValueB += 0.003;
+					break;
+				case 'S':
+					waveValueB -= 0.003;
+					break;
+			}
+			if(wavelengthCounterB > 100000){
+				switch(operandB){
+					case 'A' : 
+					operandC = 'S';
+					break;
+					case 'S' : 
+					operandB = 'A';
+					break;
+				}		
+				wavelengthCounterB = 0;
+			}			
+			IFSCLR(0) = 0x010000;// Clear the timer interrupt status flag
+		}
+		
+		//klocka 5,D
+		else if((IFS(0)&0x0100000)==0x0100000){
+			wavelengthCounterC++;
+			switch(operandD){
+				case 'A' :
+					waveValueC += 0.005;
+					break;
+				case 'S':
+					waveValueC -= 0.005;
+					break;
+			}			
+			if(wavelengthCounterC > 60000){
+				switch(operandC){
+					case 'A' : 
+					operandC = 'S';
+					break;
+					case 'S' : 
+					operandC = 'A';
+					break;
+				}
+				wavelengthCounterC = 0;
+			}	
+			IFSCLR(0) = 0x0100000;// Clear the timer interrupt status flag		
+		}
+}
+
+
 
 // Vad mer göra?
 // Använda oss av timers, inbyggd pwm-funktion och volym.
