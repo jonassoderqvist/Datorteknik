@@ -1,22 +1,6 @@
 #include <pic32mx.h>
 #include <stdint.h>
-
-// variables for the wave-generation
-volatile double  waveValueA = 0;
-volatile double  waveValueB = 0;
-volatile double  waveValueC = 255;
-volatile double  waveValueD = 0;
-
-char operandA = 'A';
-char operandB = 'A';
-char operandC = 'A';
-char operandD = 'A';
-
-volatile int wavelengthCounterA = 0;
-volatile int wavelengthCounterB = 0;
-volatile int wavelengthCounterC = 0;
-volatile int wavelengthCounterD = 0;
-
+#include "waveGen.c"
 int pulse = 0xFF;
 static const off = 0xff;
 /* Does it work? */
