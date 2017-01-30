@@ -33,8 +33,8 @@ int flags = 0;
 int hex_num[20];
 
 void initSynth() {
-	int notes = 0;
 	for(;;) {
+		int[2] notes;
 		int btns = getBtns();
 		int switches = getSwitches();
 		
@@ -57,18 +57,21 @@ void initSynth() {
 		
 		if((btns & 0b0001) == 0b0001) {
 			//playToneRev(E6, 2);   // E
-			notes = notes + 255;
-			numNotes++;
-			
+			    notes = notes + waveValueA;
+			    numNotes++;
+
 		}
 		else if((btns & 0b010) == 0b010) {
-			notes =  notes +300;
-			numNotes++;
-			
+            //playToneRev(E6, 2);   // E
+            notes = notes + 300;
+            numNotes++;
+
+
 		}
 		else if((btns & 0b100) == 0b100) {
-			notes = notes + 355;
-			numNotes++;        // C
+            //playToneRev(E6, 2);   // E
+            notes = notes + 350;
+            numNotes++;
 		}
 		
 		int noteToPlay = notes/numNotes;
@@ -211,12 +214,9 @@ void initPwm(){
 }
 
 void setPwm(int pwm, int duty){
-	OC1RS = duty;
+    int dutycycle = 0xFFFFFFFF * (duty / 100);
+	OC1RS = dutycycle;
 	PR2 = pwm;
-}
-
-void pwm(int pwm, int dutycycle){
-
 }
 
 int main(void) {
