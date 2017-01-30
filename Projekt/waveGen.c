@@ -22,6 +22,13 @@ void play(waveGen p, bool play){
     p->play = play;
 }
 
+bool getPlay(waveGen p){
+    return p->play;
+}
+
+double getValue(waveGen p){
+    return p->A;
+}
 void gen(waveGen p){
 float pi = 3.141592;
 x = p->x;
