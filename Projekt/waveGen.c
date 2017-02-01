@@ -7,21 +7,18 @@
 
 typedef struct
 {
-char name;
 int number;
-int freq;
+double freq;
 double A;
-int x;
+double x;
 bool play;
 } Note;
 
-waveGen array[];
-
 void gen(Note p){
 float pi = 3.141592;
-x = p.x;
-freq = p.freq;
-A = sin(freq*x*step*2*pi);
+double x = p.x;
+double freq = p.freq;
+double A = sin(freq*x*step*2*pi);
 x++;
 p.A = A;
 p.x = x;
