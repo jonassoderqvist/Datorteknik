@@ -1,137 +1,99 @@
 #include <pic32mx.h>
 #include <stdint.h>
-#include "waveGen.c"
-
-int pulse = 0xFF;
-static const off = 0xff;
-Note array[11];
-/* Does it work? */
-
-/* Defines pulse-widths for two octaves for a set of tones */
-static const E6 = 3800;
-static const D6 = 4250;
-static const C6 = 4800;
-static const E5 = 7584;
-static const D5 = 8513;
-static const C5 = 9555;
 
 extern void _enable_interrupt();
-int flags = 0;
-int hex_num[20];
+
+//Change length of the Steps.
+#define step 0.00001
+
+struct Note{
+int number;
+int freq;
+double A;
+double x;
+int play;
+}Note;
+
+struct Note array[12];
+	
+void gen(int i){
+	float pi = 3.141592;
+	double freq = array[i].freq;
+	double x = array[i].x;
+	double A = ((sin(x*step*freq) + 1) * 1000);
+	array[i].x = x++;
+	array[i].A = A;
+}
+
 void initNotes(){
 
-array[0] = Note C;
-array[1] = Note C#;
-array[2] = Note D;
-array[3] = Note D#;
-array[4] = Note E;
-array[5] = Note F;
-array[6] = Note F#;
-array[7] = Note G;
-array[8] = Note G#;
-array[9] = Note A;
-array[10] = Note A#;
-array[11] = Note B;
-
-C.number = 0;
-C#.number = 1;
-D.number = 2;
-D#.number = 3;
-E.number = 4;
-F.number = 5;
-F#.number = 6;
-G.number = 7;
-G#.number = 8;
-A.number = 9;
-A#.number = 10;
-B.number = 11;
-
-C.freq = 4800;
-C#.freq = 4500;
-D.freq = 4300;
-D#.freq = 4100;
-E.freq = 3900;
-F.freq = 3700;
-F#.freq = 3500;
-G.freq = 3300;
-G#.freq = 3100;
-B.freq = 2900;
-B#.freq = 2700;
-
-C.A = 0;
-C#.A = 0;
-D.A = 0;
-D#.A = 0;
-E.A = 0;
-F.A = 0;
-F#.A = 0;
-G.A = 0;
-G#.A = 0;
-B.A = 0;
-B#.A = 0;
-
-C.play = 0;
-C#.play = 0;
-D.play = 0;
-D#.play = 0;
-E.play = 0;
-F.play = 0;
-F#.play = 0;
-G.play = 0;
-G#.play = 0;
-B.play = 0;
-B#.play = 0;
-
+	
+	
+	struct Note C = {0, 500, 0.0, 0.0, 0};
+	struct Note Ciss = {1, 500, 0.0, 0.0, 0};
+	struct Note D = {2, 500, 0.0, 0.0, 0};
+	struct Note Diss = {3, 4100, 0.0, 0.0, 0};
+	struct Note E = {4, 3900, 0.0, 0.0, 0};
+	struct Note F = {5, 3700, 0.0, 0.0, 0};
+	struct Note Fiss = {6, 3500, 0.0, 0.0, 0};
+	struct Note G = {7, 3300, 0.0, 0.0, 0};
+	struct Note Giss = {8, 3100, 0.0, 0.0, 0};
+	struct Note B = {9, 2900, 0.0, 0.0, 0};
+	struct Note Biss = {10, 2700, 0.0, 0.0, 0};
+	
+	array[0] = C;
+	array[1] = Ciss;
+	array[2] = D;
+	array[3] = Diss;
+	array[4] = E;
+	array[5] = F;
+	array[6] = Fiss;
+	array[7] = G;
+	array[8] = Giss;
+	array[9] = B;
+	array[10] = Biss;
+	
+	
 }
 void initSynth() {
 	for(;;) {
-		int[2] notes;
 		int btns = getBtns();
-		int switches = getSwitches();
-		
-		int numNotes = 0;
-		
-		if((btns & 0b0001) == 0b0001) {
-			//playToneRev(E6, 2);   // E
-			    //notes = notes + waveValueA;
-			    //numNotes++;
-			    array[0].play = TRUE;
+		// Check buttons. If button is pressed, corresponding note's play-value will be set to 1 (true)
+		if((PORTD & 0b000000100000) == 0b000000100000){
+			    array[0].play = 1; 
 
 		}else{
-		      array[0].play = FALSE;
+		      array[0].play = 0;
 		}
-		if((btns & 0b010) == 0b010) {
-            //playToneRev(E6, 2);   // E
-            //notes = notes + 300;
-            //numNotes++;
-            array[1].play = TRUE;
+		if((PORTD & 0b000001000000) == 0b000001000000){
+            array[1].play = 1;
 		}
 		else{
-		    array[1].play = FALSE;
+		    array[1].play = 0;
 		}
-		if((btns & 0b100) == 0b100) {
-            //playToneRev(E6, 2);   // E
-            //notes = notes + 350;
-            //numNotes++;
-            array[2].play = TRUE;
-		}else{
-		    array[2].play = FALSE;
+		if((PORTD & 0b000010000000) == 0b000010000000){
+            array[2].play = 1;
+		}else {
+		    array[2].play = 0;
 		}
-		/*
-		int noteToPlay = notes/numNotes;
-		playTone(noteToPlay);
-		*/
+		
+		// Check note-array for notes with play-value 1 (true). These are added together.
 		int c;
 		int nr;
-	for(i = 0; i < sizeof(array) / sizeof(Note); i++)
-        {
-        if(array[i].play == TRUE){
-          c = c + array[i].A;
-          gen(array[i]);
-          nr++;
-          }
+		int i;
+		for(i = 0; i < 11; i++){
+			if(array[i].play == 1){
+				c =  c + (array[i].A + 1);
+				gen(i);
+				nr++;
+			}
         }
-        setPwm(c/nr, 50);
+		
+		// Set PWM to previously calculated value.
+		if((c/nr) > 0){
+        setPwm((c/nr), 50);
+		} else { setPwm(0,50); }
+		
 	}
 }
 
@@ -147,19 +109,12 @@ int getBtns(void) {
  	return(PORTD &0x1);
  }
 
-/*  Pulsewidth to Frequency:
-	(pulseWidth * 0.0000001) * 2 = periodTime
-	(1 / periodTime) = frequency
-	------------ OR -------------
-	Frequency (aka tone) to pulsewidth:
-	(1 / Frequency) = periodTime
-	( PeriodTime / 2 ) / 0.0000001 = pulseWidth */
 
 void initPwm(){
 	T2CON = 0x070; // Clear timer2, prescale at 1:1
 	TMR2 = 0x0; // Timer2 value starts at 0
 	OC1CON = 0x0000; // Turn off and clear pwm
-	OC1R = 0x0064;
+	OC1R = 0x0001;
 	OC1RS = 0; // Dutycycle
 	OC1CON = 0x0006; // Configure for PWM mode without Fault pin
 	PR2 = 0; // Set dutycycle, HÄR ÄNDRAR MAN TONER!
@@ -172,15 +127,15 @@ void initPwm(){
 
 void setPwm(int pwm, int duty){
     int dutycycle = 0xFFFFFFFF * (duty / 100);
-	OC1RS = dutycycle;
-	PR2 = pwm;
+	OC1RS = duty;
+	int pwm2 = pwm;
+	PR2 = pwm2;
 }
 
 int main(void) {
 	TRISE = 0x00; 	/* Port E bits 0 through 7 is used for the LED and is set to 0 (output) */
 	PORTE = 0x00;
 	initNotes();
-	initTimers();
 	initPwm();
 	initSynth();
 	return 0;
@@ -188,26 +143,9 @@ int main(void) {
 
 void user_isr( void ) {
 	if((IFS(0)&0x0100)==0x0100){
+		PORTE = 0xffff;
 		IFSCLR(0) = 0x0100;
+		
 	}
 }
 
-// Vad mer göra?
-// Använda oss av timers, inbyggd pwm-funktion och volym.
-// Kunna spela fyra toner
-
-
-
-// Timers?
-// Inbyggda PWM-funktionen?
-// Volym
-//
-// Lägga till funktioner med utgångspunkt i musiken:
-// Delay
-// Tremolo
-// Reverb
-// Volym
-// Lägga till fler tangenter
-
-
-// förändra dutycycle för att simulera sinuskurva med olika 
